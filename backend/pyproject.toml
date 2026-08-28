@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pineflow-backend"
+name = "scenicmind-backend"
 version = "0.1.0"
-description = "Minimal crowd prediction backend skeleton"
+description = "Minimal ScenicMind backend skeleton"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.116,<1",

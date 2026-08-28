@@ -1,15 +1,19 @@
 import os
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .prediction import PredictionResult, get_latest_prediction
+from .modules.module_one import router as module_one_router
+from .modules.module_two import router as module_two_router
 
 app = FastAPI(
-    title="PineFlow API",
+    title="ScenicMind API",
     version="0.1.0",
     description="人流量预测系统的后端接口骨架。",
 )
+
+app.include_router(module_one_router)
+app.include_router(module_two_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,16 +27,3 @@ app.add_middleware(
 @app.get("/health", tags=["system"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
-
-
-@app.get(
-    "/api/v1/predictions/latest",
-    response_model=PredictionResult,
-    response_model_by_alias=True,
-    tags=["predictions"],
-)
-def latest_prediction() -> PredictionResult:
-    try:
-        return get_latest_prediction()
-    except NotImplementedError as error:
-        raise HTTPException(status_code=501, detail=str(error)) from error

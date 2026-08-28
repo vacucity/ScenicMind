@@ -8,8 +8,8 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <section className="brand-panel">
-        <span className="brand">PINEFLOW</span>
-        <h1>人流预测<br />管理平台</h1>
+        <span className="brand">智景 SCENICMIND</span>
+        <h1>智慧景区<br />管理平台</h1>
       </section>
 
       <section className="login-panel">

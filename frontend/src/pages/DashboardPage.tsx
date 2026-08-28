@@ -2,7 +2,7 @@ export function DashboardPage() {
   return (
     <main className="dashboard-page">
       <aside className="sidebar">
-        <span className="brand">PINEFLOW</span>
+        <span className="brand">智景 SCENICMIND</span>
         <nav aria-label="主导航">
           <a href="/dashboard" aria-current="page">数据看板</a>
         </nav>

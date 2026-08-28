@@ -1,2 +1,1 @@
-"""PineFlow backend package."""
-
+"""ScenicMind backend package."""
