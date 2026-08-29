@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.quality.clean_training_data import clean_frame
+from scenicmind.quality.clean_training_data import clean_frame
 
 
 def test_cleaner_drops_missing_target_and_removes_nulls():

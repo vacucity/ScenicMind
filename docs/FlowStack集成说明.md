@@ -13,7 +13,7 @@
 ## 目录
 
 ```text
-src/flowstack/
+scenicmind/flowstack/
 ├── config.py       # 配置对象（冗余阈值/堆叠折数/样本权重/基学习器参数）
 ├── redundancy.py   # 冗余感知特征选择（Spearman 聚类 + 簇内互信息代表）
 ├── model.py        # 差分目标 + 四路基学习器 + OOF 堆叠 + 场景校正
@@ -30,7 +30,7 @@ src/flowstack/
 ## 训练
 
 ```powershell
-python -m src.flowstack.cli train `
+python -m scenicmind.flowstack.cli train `
   --data path/to/training_data.xlsx `
   --artifact-dir artifacts/flowstack/current
 ```
@@ -54,7 +54,7 @@ artifacts/flowstack/current/
 输入文件必须包含模型 `metadata.json` 中列出的原始特征列（去冗余前的全量列，模型内部自动完成选择与编码），可含也可不含目标 `visitors`。
 
 ```powershell
-python -m src.flowstack.cli predict `
+python -m scenicmind.flowstack.cli predict `
   --model-dir artifacts/flowstack/current/model `
   --features future_features.csv `
   --output outputs/flowstack/predictions.csv
@@ -72,7 +72,7 @@ Python 内置方式：
 
 ```python
 import pandas as pd
-from src.flowstack.service import PredictionService
+from scenicmind.flowstack.service import PredictionService
 
 service = PredictionService.from_directory("artifacts/flowstack/current/model")
 result = service.predict(pd.read_csv("future_features.csv"))
@@ -84,7 +84,7 @@ result = service.predict(pd.read_csv("future_features.csv"))
 ## 单独生成特征重要性（接 Agent）
 
 ```powershell
-python -m src.flowstack.cli importance `
+python -m scenicmind.flowstack.cli importance `
   --model-dir artifacts/flowstack/current/model `
   --output-dir outputs/flowstack/importance `
   --top-k 20

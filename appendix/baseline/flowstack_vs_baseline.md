@@ -1,7 +1,7 @@
 # FlowStack vs Baseline —— 九寨沟日游客量预测模型对比报告
 
 > 数据：`data.xlsx`（2,377 天 × 56 列，2019-10-11 ~ 2026-08-28）
-> 代码：`flowstack_eval.py` + `src/flowstack/` | 环境：Python 3.12 + sklearn 1.9 / LightGBM 4.7 / XGBoost 3.4 / CatBoost 1.2
+> 代码：`flowstack_eval.py` + `scenicmind/flowstack/` | 环境：Python 3.12 + sklearn 1.9 / LightGBM 4.7 / XGBoost 3.4 / CatBoost 1.2
 > 评估协议与 `baseline_models.py` **完全一致**：时间序 80/20（训练 1,901 / 测试 476）、TimeSeriesSplit(5) 前向链式验证、RandomizedSearchCV×25 组按 CV-MAE 寻优、随机种子 42、同一套五项指标实现。
 
 ## 1. 测试集性能对比（时间外样本，476 天，2025-05-10 ~ 2026-08-28）
@@ -76,7 +76,7 @@
 
 | 文件 | 内容 |
 |---|---|
-| `src/flowstack/` | 模型包（config / redundancy / model / metrics / service / export / cli） |
+| `scenicmind/flowstack/` | 模型包（config / redundancy / model / metrics / service / export / cli） |
 | `flowstack_eval.py` | 可复现评估脚本（baseline 同协议） |
 | `artifacts/flowstack/current/model/` | 模型产物（model.joblib + metadata.json） |
 | `outputs/flowstack_metrics.csv` | 全模型指标汇总 |

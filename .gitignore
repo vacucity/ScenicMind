@@ -18,12 +18,18 @@ __pycache__/
 node_modules/
 dist/
 .pnpm-store/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
 
 # --- Virtualenv / bundled deps ---
 .venv/
 venv/
 env/
 .deps/
+
+# --- Runtime data (uploads, sqlite) ---
+backend/runtime/
 
 # --- Env / secrets ---
 .env

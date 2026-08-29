@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from src.features.builder import _aggregate_notice_events, add_target_history
+from scenicmind.features.builder import _aggregate_notice_events, add_target_history
 
 
 def test_rolling_feature_does_not_include_current_target():

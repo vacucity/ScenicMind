@@ -1,7 +1,7 @@
 import pandas as pd
 
-from src.collectors.jiuzhai_visitors import parse_visitor_count
-from src.parsers.notice_parser import parse_notice
+from scenicmind.collectors.jiuzhai_visitors import parse_visitor_count
+from scenicmind.parsers.notice_parser import parse_notice
 
 
 def test_visitor_regex_variants():

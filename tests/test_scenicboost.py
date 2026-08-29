@@ -6,11 +6,11 @@ from dataclasses import replace
 import numpy as np
 import pandas as pd
 
-from src.scenicboost.config import CalibrationConfig, load_config
-from src.scenicboost.export import build_agent_contexts, build_forecast_actual
-from src.scenicboost.model import SceneResidualCalibrator
-from src.scenicboost.schema import select_model_features, validate_forecast_safe_columns
-from src.scenicboost.training import rolling_folds
+from scenicmind.scenicboost.config import CalibrationConfig, load_config
+from scenicmind.scenicboost.export import build_agent_contexts, build_forecast_actual
+from scenicmind.scenicboost.model import SceneResidualCalibrator
+from scenicmind.scenicboost.schema import select_model_features, validate_forecast_safe_columns
+from scenicmind.scenicboost.training import rolling_folds
 
 
 def test_model_features_exclude_target_and_quality_metadata():

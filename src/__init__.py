@@ -1,2 +1,0 @@
-"""Jiuzhaigou dataset package."""
-

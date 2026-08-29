@@ -30,10 +30,10 @@ from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
 import lightgbm as lgb
 import xgboost as xgb
 
-from src.flowstack.config import FlowStackConfig
-from src.flowstack.metrics import regression_metrics
-from src.flowstack.model import FlowStackModel
-from src.flowstack.redundancy import RedundancyReducer
+from scenicmind.flowstack.config import FlowStackConfig
+from scenicmind.flowstack.metrics import regression_metrics
+from scenicmind.flowstack.model import FlowStackModel
+from scenicmind.flowstack.redundancy import RedundancyReducer
 
 warnings.filterwarnings("ignore")
 RS = 42
