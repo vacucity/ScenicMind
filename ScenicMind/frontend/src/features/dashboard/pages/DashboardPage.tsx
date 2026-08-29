@@ -675,6 +675,7 @@ function AdmissionProgress({ result }: { result: AnalysisResult }) {
 type ChatMessage = { role: "user" | "agent"; text: string; time: string };
 
 function AgentChat({ analysisId, pendingQuestion, onQuestionConsumed }: { analysisId: string; pendingQuestion?: string | null; onQuestionConsumed?: () => void }) {
+  const [open, setOpen] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "agent", text: "你好，我是智景分析助手。可以针对本次客流预测结果向你解答疑问，例如「下周哪天客流最高」「天气对预测有多大影响」。", time: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }) },
   ]);
@@ -704,9 +705,9 @@ function AgentChat({ analysisId, pendingQuestion, onQuestionConsumed }: { analys
     reply(text);
   }
 
-  // 外部注入问题（经营分析页「问 Agent」按钮）自动发送
   if (pendingQuestion && pendingQuestion !== pendingRef.current) {
     pendingRef.current = pendingQuestion;
+    setOpen(true);
     if (!sending) setTimeout(() => reply(pendingQuestion), 50);
     onQuestionConsumed?.();
   }
@@ -715,9 +716,23 @@ function AgentChat({ analysisId, pendingQuestion, onQuestionConsumed }: { analys
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages]);
 
+  if (!open) {
+    return (
+      <button className="chat-fab" onClick={() => setOpen(true)} aria-label="展开智景助手">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+        </svg>
+        <span className="chat-fab-badge">Agent</span>
+      </button>
+    );
+  }
+
   return (
-    <section className="card agent-chat-card">
-      <div className="section-heading compact"><div><h2>智景助手</h2><p>针对本次预测结果提问</p></div><span className="agent-badge">Agent</span></div>
+    <div className="chat-float">
+      <div className="chat-float-header">
+        <div className="chat-float-title"><span className="agent-badge">Agent</span><strong>智景助手</strong></div>
+        <button className="chat-float-close" onClick={() => setOpen(false)} aria-label="收起">×</button>
+      </div>
       <div className="chat-messages" ref={listRef}>
         {messages.map((msg, i) => <div key={i} className={`chat-msg chat-${msg.role}`}>
           <div className="chat-bubble"><p>{msg.text}</p></div>
@@ -736,7 +751,7 @@ function AgentChat({ analysisId, pendingQuestion, onQuestionConsumed }: { analys
         />
         <button type="button" className="chat-send" onClick={send} disabled={sending || !input.trim()}>{sending ? "…" : "发送"}</button>
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -1054,7 +1069,6 @@ export function DashboardPage() {
 
   function askAgent(question: string) {
     setAgentQuestion(question);
-    setView("dashboard");
   }
 
   useEffect(() => {
@@ -1159,12 +1173,13 @@ export function DashboardPage() {
 
                 <section className="card source-card"><div className="section-heading compact"><div><h2>数据来源</h2><p>本次分析字段接入状态</p></div></div><ul className="availability-list">{Object.entries(result.dataAvailability).map(([key, item]) => <li key={key}><span className={item.status === "uploaded" ? "source-ok" : "source-pending"}/><div><strong>{item.label}</strong><small>{item.status === "uploaded" ? `已接入 · ${item.source}` : "待配置真实数据源"}</small></div></li>)}</ul></section>
 
-                <AgentChat analysisId={analysis.analysisId} pendingQuestion={agentQuestion} onQuestionConsumed={() => setAgentQuestion(null)}/>
+
               </aside>
             </div>
           </div>
         )}
       </section>
+      {analysis && <AgentChat analysisId={analysis.analysisId} pendingQuestion={agentQuestion} onQuestionConsumed={() => setAgentQuestion(null)}/>}
     </main>
   );
 }

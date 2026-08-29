@@ -80,7 +80,7 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
             {(message || notice) && <p className={message ? "form-message error" : "form-message success"} role="status">{message || notice}</p>}
             <button type="submit" disabled={submitting}>{submitting ? "处理中…" : isRegister ? "注册" : "登录"}</button>
           </form>
-          <p className="auth-prototype-note">账号由 ScenicMind 后端安全验证，会话有效期为 7 天。</p>
+          <p className="auth-prototype-note">体验账号：test　体验密码：test</p>
         </div>
       </section>
     </main>

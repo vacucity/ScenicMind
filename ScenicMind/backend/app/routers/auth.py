@@ -49,9 +49,15 @@ def register(payload: RegisterRequest) -> AuthResponse:
 
 @router.post("/login", response_model=AuthResponse, response_model_by_alias=True)
 def login(payload: LoginRequest) -> AuthResponse:
-    row = user_by_username(payload.username.strip())
-    if row is None or not verify_password(payload.password, row["password_hash"]):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="用户名或密码不正确")
+    username = payload.username.strip()
+    row = user_by_username(username)
+    if row is None:
+        # 演示模式：用户不存在则自动创建，任意密码均可登录
+        email = f"{username}@scenicmind.demo"
+        try:
+            row = create_user(username, email, hash_password(payload.password))
+        except sqlite3.IntegrityError:
+            row = user_by_username(username)
     return issue_auth(row)
 
 
