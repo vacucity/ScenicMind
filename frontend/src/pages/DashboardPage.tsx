@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
+import {
+  getModuleOneOutput,
+  getModuleTwoOutput,
+  getModuleTwoSpots,
+  type ModuleOneData,
+  type ModuleTwoReport,
+} from "../api/modules";
+
 type IconName = "dashboard" | "forecast" | "agent" | "prepare" | "history" | "bell" | "chevron";
 
 type HistoryRange = 7 | 14 | 30;
@@ -10,34 +18,6 @@ type ChartPoint = {
   kind: "history" | "today" | "forecast";
 };
 
-const historyValues = [
-  5400, 6100, 5800, 6900, 7200, 6700, 7600, 8100, 7400, 6900,
-  8300, 8800, 7900, 7100, 6500, 7200, 7600, 8400, 9100, 7800,
-  7300, 6900, 7600, 8200, 8700, 7400, 6800, 7900, 8100, 8250,
-];
-const futureValues = [12800, 9600, 6300, 5900, 7200, 8100, 10400];
-
-function dateLabel(offset: number) {
-  const date = new Date(2026, 7, 28);
-  date.setDate(date.getDate() + offset);
-  return `${date.getMonth() + 1}/${date.getDate()}`;
-}
-
-const historicalPoints: ChartPoint[] = historyValues.map((value, index) => ({
-  label: dateLabel(index - historyValues.length),
-  fullLabel: `2026/${dateLabel(index - historyValues.length)}`,
-  value,
-  kind: "history",
-}));
-
-const todayPoint: ChartPoint = { label: "今天", fullLabel: "2026/8/28", value: 12800, kind: "today" };
-const forecastPoints: ChartPoint[] = futureValues.map((value, index) => ({
-  label: dateLabel(index + 1),
-  fullLabel: `2026/${dateLabel(index + 1)}`,
-  value,
-  kind: "forecast",
-}));
-
 const navItems: Array<{ label: string; icon: IconName }> = [
   { label: "数据看板", icon: "dashboard" },
   { label: "客流预测", icon: "forecast" },
@@ -46,15 +26,27 @@ const navItems: Array<{ label: string; icon: IconName }> = [
   { label: "历史记录", icon: "history" },
 ];
 
-const weekForecast = [
-  { day: "六", value: "12,800", level: "较高" },
-  { day: "日", value: "9,600", level: "正常" },
-  { day: "一", value: "6,300", level: "较低" },
-  { day: "二", value: "5,900", level: "较低" },
-  { day: "三", value: "7,200", level: "正常" },
-  { day: "四", value: "8,100", level: "正常" },
-  { day: "五", value: "10,400", level: "较高" },
-];
+const numberFormatter = new Intl.NumberFormat("zh-CN");
+
+function parseDate(iso: string): Date {
+  return new Date(`${iso}T00:00:00`);
+}
+
+function shortLabel(iso: string): string {
+  const date = parseDate(iso);
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}
+
+function chineseDate(iso: string): string {
+  const date = parseDate(iso);
+  const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 · ${weekdays[date.getDay()]}`;
+}
+
+function truncate(text: string, limit = 34): string {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  return normalized.length <= limit ? normalized : `${normalized.slice(0, limit)}…`;
+}
 
 function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
@@ -86,10 +78,20 @@ function smoothPath(points: Array<[number, number]>) {
   }, "");
 }
 
-function TrendChart({ historyDays }: { historyDays: HistoryRange }) {
+function TrendChart({
+  historicalPoints,
+  todayPoint,
+  forecastPoints,
+  historyDays,
+}: {
+  historicalPoints: ChartPoint[];
+  todayPoint: ChartPoint;
+  forecastPoints: ChartPoint[];
+  historyDays: HistoryRange;
+}) {
   const points = useMemo(
     () => [...historicalPoints.slice(-historyDays), todayPoint, ...forecastPoints],
-    [historyDays],
+    [historicalPoints, todayPoint, forecastPoints, historyDays],
   );
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(historyDays);
   const [panDelta, setPanDelta] = useState(0);
@@ -118,7 +120,7 @@ function TrendChart({ historyDays }: { historyDays: HistoryRange }) {
   useEffect(() => {
     setPanDelta(0);
     setHoveredIndex(historyDays);
-  }, [historyDays]);
+  }, [historyDays, todayPoint]);
 
   const shiftChart = (direction: -1 | 1) => {
     setPanDelta(current => {
@@ -195,8 +197,116 @@ function MetricCard({ title, value, children, variant }: { title: string; value:
   );
 }
 
+function buildChartPoints(one: ModuleOneData) {
+  const historicalPoints: ChartPoint[] = one.history.map(item => ({
+    label: shortLabel(item.date),
+    fullLabel: item.date,
+    value: item.visitors,
+    kind: "history",
+  }));
+  const todayPoint: ChartPoint = {
+    label: "今天",
+    fullLabel: one.today.date,
+    value: one.today.predicted,
+    kind: "today",
+  };
+  const forecastPoints: ChartPoint[] = one.forecast.map(item => ({
+    label: shortLabel(item.date),
+    fullLabel: item.date,
+    value: item.predicted,
+    kind: "forecast",
+  }));
+  return { historicalPoints, todayPoint, forecastPoints };
+}
+
 export function DashboardPage() {
   const [historyDays, setHistoryDays] = useState<HistoryRange>(7);
+  const [spots, setSpots] = useState<string[]>(["黄果树瀑布"]);
+  const [selectedSpot, setSelectedSpot] = useState("黄果树瀑布");
+  const [one, setOne] = useState<ModuleOneData | null>(null);
+  const [report, setReport] = useState<ModuleTwoReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getModuleTwoSpots().then(list => {
+      if (!active) return;
+      if (list.length) {
+        setSpots(list);
+        if (!list.includes(selectedSpot)) {
+          setSelectedSpot(list[0]);
+        }
+      }
+    }).catch(() => undefined);
+    return () => {
+      active = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      getModuleOneOutput(selectedSpot),
+      getModuleTwoOutput(selectedSpot),
+    ])
+      .then(([oneOutput, reportOutput]) => {
+        if (!active) return;
+        setOne(oneOutput.data);
+        setReport(reportOutput.data);
+      })
+      .catch((requestError: unknown) => {
+        if (active) {
+          setError(requestError instanceof Error ? requestError.message : "数据加载失败");
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [selectedSpot]);
+
+  if (loading || !one || !report) {
+    return (
+      <main className="dashboard-page">
+        <aside className="sidebar">
+          <div>
+            <a className="brand-mark" href="/dashboard" aria-label="智景 ScenicMind 首页">
+              <span className="brand-glyph" aria-hidden="true"><i /><i /><i /></span>
+              <span><b>智景</b><small>SCENICMIND</small></span>
+            </a>
+          </div>
+        </aside>
+        <section className="dashboard-main">
+          <div className="card" style={{ padding: 48, textAlign: "center" }}>
+            {error
+              ? <><h2 style={{ margin: 0 }}>数据加载失败</h2><p style={{ color: "var(--muted)", margin: "8px 0 0" }}>{error}（请确认后端已启动于 127.0.0.1:8000）</p></>
+              : <><h2 style={{ margin: 0 }}>正在加载经营驾驶舱…</h2><p style={{ color: "var(--muted)", margin: "8px 0 0" }}>正在请求客流预测与经营报告</p></>}
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  const { historicalPoints, todayPoint, forecastPoints } = buildChartPoints(one);
+  const week = one.week.map(item => ({
+    day: item.day,
+    value: numberFormatter.format(item.value),
+    level: item.level,
+  }));
+  const peak = one.forecast.reduce((a, b) => (b.predicted > a.predicted ? b : a), one.forecast[0]);
+  const kpis = report.kpis;
+  const leadingDriver = report.drivers.length
+    ? report.drivers.reduce((a, b) => (Math.abs(b.contributionVisitors) > Math.abs(a.contributionVisitors) ? b : a))
+    : null;
+  const topRecommendation = report.recommendations[0];
+  const recommendations = report.recommendations.slice(0, 4);
+  const riskText = one.today.level === "较高" ? "较高客流" : one.today.level === "较低" ? "较低客流" : "正常客流";
 
   return (
     <main className="dashboard-page">
@@ -219,12 +329,28 @@ export function DashboardPage() {
 
         <div className="sidebar-foot">
           <span className="park-status"><i />数据正常</span>
-          <strong>示范景区 · 全园</strong>
+          <strong>{selectedSpot} · 全园</strong>
           <small>数据更新于 14:00</small>
         </div>
       </aside>
 
       <section className="dashboard-main">
+        <div className="dashboard-header">
+          <div className="header-tools">
+            <label className="park-selector" aria-label="选择景点">
+              <select
+                value={selectedSpot}
+                onChange={event => setSelectedSpot(event.target.value)}
+                style={{ border: 0, background: "transparent", color: "inherit", fontSize: 11, cursor: "pointer", outline: "none", width: "100%" }}
+              >
+                {spots.map(spot => (
+                  <option key={spot} value={spot}>{spot}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+
         <div className="dashboard-grid">
           <div className="primary-column">
             <section className="metric-card entrance-metric">
@@ -232,15 +358,15 @@ export function DashboardPage() {
                 <div className="metric-title-row">
                   <span className="metric-kicker">今日预计总人数</span>
                 </div>
-                <div className="metric-value"><strong>12,800</strong><span>人</span></div>
+                <div className="metric-value"><strong>{numberFormatter.format(one.today.predicted)}</strong><span>人</span></div>
                 <div className="metric-footer">
-                  <span>预计范围 11,900–13,700</span>
-                  <span className="attention-text">客流较高</span>
+                  <span>预计范围 {numberFormatter.format(one.today.rangeLow)}–{numberFormatter.format(one.today.rangeHigh)}</span>
+                  <span className="attention-text">客流{one.today.level}</span>
                 </div>
               </div>
               <div className="dashboard-in-card">
                 <h1>Dashboard</h1>
-                <p>2026年8月28日 · 星期五</p>
+                <p>{chineseDate(one.today.date)}</p>
               </div>
             </section>
 
@@ -262,20 +388,25 @@ export function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <TrendChart historyDays={historyDays} />
+              <TrendChart
+                historicalPoints={historicalPoints}
+                todayPoint={todayPoint}
+                forecastPoints={forecastPoints}
+                historyDays={historyDays}
+              />
               <div className="chart-caption">
-                <span className="chart-peak"><i />预计峰值 12,800 人 · 8月29日</span>
+                <span className="chart-peak"><i />预计峰值 {numberFormatter.format(peak.predicted)} 人 · {shortLabel(peak.date)}</span>
                 <span>悬停两侧滑动 · 数据点查看详情</span>
               </div>
             </section>
 
             <section className="card week-card">
               <div className="card-heading compact-heading">
-                <div className="week-heading-copy"><h2>未来 7 天</h2><span>全园预计入园人数</span></div>
+                <div className="week-heading-copy"><h2>未来 7 天</h2><span>{selectedSpot}预计入园人数</span></div>
                 <button type="button" className="text-link">查看预测详情 <Icon name="chevron" size={14} /></button>
               </div>
               <div className="week-list">
-                {weekForecast.map(item => (
+                {week.map(item => (
                   <div className={`week-day ${item.level === "较高" ? "level-high" : item.level === "较低" ? "level-low" : "level-normal"}`} key={item.day}>
                     <span>周{item.day}</span>
                     <strong>{item.value}</strong>
@@ -287,9 +418,9 @@ export function DashboardPage() {
           </div>
 
           <aside className="insight-column" aria-label="运营洞察">
-            <MetricCard title="今日已入园人数" value="8,426">
-              <span>截至 14:00</span>
-              <span className="positive">较上周同期 +8.4%</span>
+            <MetricCard title="今日已入园人数" value={numberFormatter.format(one.today.entered)}>
+              <span>{one.today.enteredTime}</span>
+              <span className="positive">{one.today.enteredWow}</span>
             </MetricCard>
 
             <section className="card agent-card">
@@ -297,9 +428,9 @@ export function DashboardPage() {
                 <div><h2>Agent 数据报告</h2></div>
               </div>
               <div className="agent-list">
-                <article><span>客流变化</span><p>今日客流预计较上周同期增长 11%。</p></article>
-                <article><span>可能原因</span><p>天气晴朗，上午预约量持续上升。</p></article>
-                <article><span>运营建议</span><p>15:00 前确认高峰接待预案。</p></article>
+                <article><span>客流变化</span><p>{truncate(report.executiveSummary, 52)}</p></article>
+                <article><span>可能原因</span><p>{leadingDriver ? truncate(`${leadingDriver.label}：${leadingDriver.explanation}`, 52) : "暂无归因数据"}</p></article>
+                <article><span>运营建议</span><p>{topRecommendation ? truncate(`${topRecommendation.title}：${topRecommendation.action}`, 52) : "暂无建议"}</p></article>
               </div>
               <div className="agent-footer">
                 <button className="agent-consult-button" type="button">咨询 Agent <Icon name="chevron" size={13} /></button>
@@ -309,14 +440,21 @@ export function DashboardPage() {
             <section className="card prepare-card">
               <div className="card-heading compact-heading">
                 <div><h2>运营准备</h2></div>
-                <span className="risk-label"><i />较高客流</span>
+                <span className="risk-label"><i />{riskText}</span>
               </div>
-              <p className="prepare-lead">周六 · 建议检查高峰接待预案</p>
+              <p className="prepare-lead">峰值日 {shortLabel(kpis.peakDate)} · 预计达到承载量 {Math.round(kpis.peakCapacityRate * 100)}%</p>
               <div className="prepare-table">
-                <div className="prepare-head"><span>资源</span><span>当前</span><span>建议</span></div>
-                <div><span>开放入口</span><b>3</b><strong>4</strong></div>
-                <div><span>摆渡车辆</span><b>6</b><strong>8</strong></div>
-                <div><span>现场人员</span><b>42</b><strong>48</strong></div>
+                <div className="prepare-head"><span>建议项</span><span>优先级</span><span>预期效果</span></div>
+                {recommendations.map(item => (
+                  <div key={item.recommendationId}>
+                    <span>{truncate(item.title, 18)}</span>
+                    <b>{item.priority}</b>
+                    <strong>{truncate(item.expectedImpact, 12)}</strong>
+                  </div>
+                ))}
+                {!recommendations.length && (
+                  <div><span>暂无运营建议</span><b>-</b><strong>-</strong></div>
+                )}
               </div>
               <button className="prepare-button" type="button">查看运营准备 <Icon name="chevron" size={14} /></button>
             </section>

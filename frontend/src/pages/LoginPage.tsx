@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 export function LoginPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    window.location.href = "/dashboard";
   }
 
   return (
@@ -28,7 +29,7 @@ export function LoginPage() {
             <input name="password" type="password" autoComplete="current-password" required />
           </label>
 
-          <button type="submit">登录</button>
+          <button type="submit">进入经营驾驶舱</button>
         </form>
       </section>
     </main>
