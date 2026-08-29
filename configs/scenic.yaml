@@ -1,0 +1,7 @@
+scenic:
+  name: 九寨沟风景名胜区
+  latitude: 33.2600
+  longitude: 103.9180
+  timezone: Asia/Shanghai
+  target_start: "2019-09-01"
+

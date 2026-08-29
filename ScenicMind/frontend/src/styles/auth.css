@@ -1,0 +1,50 @@
+.auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(410px, .72fr); background: #f7f9f7; }
+.auth-scenic { position: relative; min-height: 100vh; overflow: hidden; color: white; background: #153e30 url("/brand/bg-scenic.jpg") center/cover no-repeat; }
+.auth-scenic-shade { position: absolute; inset: 0; background: linear-gradient(115deg, rgba(7, 31, 23, .25), rgba(9, 33, 25, .02) 46%, rgba(10, 36, 27, .62)), linear-gradient(0deg, rgba(8, 35, 25, .64), transparent 58%); }
+.auth-scenic-brand { position: absolute; z-index: 1; top: 38px; left: 42px; display: flex; align-items: center; gap: 13px; }
+.auth-scenic-brand img { width: 43px; height: 43px; border-radius: 50%; box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+.auth-scenic-brand div { display: grid; gap: 3px; }
+.auth-scenic-brand strong { font: 600 17px/1.2 "Noto Serif SC", serif; letter-spacing: .04em; }
+.auth-scenic-brand span { color: rgba(255,255,255,.68); font-size: 10px; letter-spacing: .18em; }
+.auth-scenic-copy { position: absolute; z-index: 1; left: clamp(42px, 7vw, 106px); bottom: clamp(64px, 12vh, 128px); }
+.auth-scenic-copy > span { color: rgba(255,255,255,.62); font: 600 10px/1 "Bahnschrift", sans-serif; letter-spacing: .3em; }
+.auth-scenic-copy h1 { margin: 17px 0 18px; font: 500 clamp(40px, 5vw, 68px)/1.18 "Noto Serif SC", serif; letter-spacing: .04em; text-shadow: 0 4px 20px rgba(0,0,0,.16); }
+.auth-scenic-copy p { margin: 0; color: rgba(255,255,255,.76); font-size: 13px; letter-spacing: .08em; }
+.auth-panel { min-height: 100vh; padding: 38px clamp(34px, 5vw, 72px); display: grid; align-items: center; background: rgba(251,252,251,.96); }
+.auth-panel-inner { width: min(100%, 390px); margin-inline: auto; }
+.auth-wordmark { width: min(245px, 74%); height: auto; display: block; margin: 0 auto 38px; }
+.auth-tabs { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 30px; border-bottom: 1px solid var(--line); }
+.auth-tabs a { position: relative; padding: 12px 8px; color: var(--subtle); text-align: center; text-decoration: none; font-size: 13px; font-weight: 600; }
+.auth-tabs a.active { color: var(--pine-900); }
+.auth-tabs a.active::after { content: ""; position: absolute; left: 24%; right: 24%; bottom: -1px; height: 2px; background: var(--pine-800); }
+.auth-form header { margin-bottom: 27px; }
+.auth-form header span { color: var(--pine-700); font: 650 9px/1 "Bahnschrift", sans-serif; letter-spacing: .22em; }
+.auth-form h2 { margin: 9px 0 0; font: 520 28px/1.3 "Noto Serif SC", serif; }
+.auth-form label { display: grid; gap: 8px; margin: 17px 0; }
+.auth-form label span { color: #4e5e55; font-size: 11px; font-weight: 650; }
+.auth-form input { width: 100%; height: 46px; padding: 0 13px; border: 1px solid var(--line); border-radius: 7px; background: white; outline: none; transition: border-color .18s ease, box-shadow .18s ease; }
+.auth-form input:focus { border-color: var(--pine-700); box-shadow: 0 0 0 3px rgba(49,107,81,.08); }
+.auth-form > button { width: 100%; height: 47px; margin-top: 12px; border: 0; border-radius: 7px; color: white; background: var(--pine-900); cursor: pointer; transition: background-color .18s ease, transform .18s ease; }
+.auth-form > button:hover:not(:disabled) { background: var(--pine-800); transform: translateY(-1px); }
+.auth-form > button:disabled { opacity: .6; cursor: wait; }
+.form-message { margin: 10px 0 0; padding: 10px 12px; border-radius: 6px; font-size: 11px; }
+.form-message.error { color: #954d42; background: #f8eae7; }
+.form-message.success { color: var(--pine-800); background: var(--sage-100); }
+.auth-prototype-note { margin: 22px 0 0; color: var(--subtle); text-align: center; font-size: 9px; line-height: 1.6; }
+
+@media (max-width: 840px) {
+  .auth-page { grid-template-columns: 1fr; }
+  .auth-scenic { min-height: 310px; }
+  .auth-scenic-copy { bottom: 42px; }
+  .auth-scenic-copy h1 { font-size: 38px; }
+  .auth-panel { min-height: auto; padding-block: 54px; }
+}
+
+@media (max-width: 520px) {
+  .auth-scenic { min-height: 250px; }
+  .auth-scenic-brand { top: 25px; left: 24px; }
+  .auth-scenic-copy { left: 24px; bottom: 30px; }
+  .auth-scenic-copy h1 { margin-block: 12px; font-size: 31px; }
+  .auth-panel { padding: 42px 24px; }
+}
+

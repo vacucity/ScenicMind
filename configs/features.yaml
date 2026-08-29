@@ -1,0 +1,9 @@
+weather_thresholds:
+  heavy_rain_mm: 25.0
+  extreme_cold_c: -15.0
+  extreme_heat_c: 30.0
+seasons:
+  summer_vacation_months: [7, 8]
+  peak_season_start: "04-01"
+  peak_season_end: "11-15"
+

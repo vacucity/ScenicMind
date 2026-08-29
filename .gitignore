@@ -1,24 +1,35 @@
-.env
+# --- OS / editor ---
 .DS_Store
-*.egg-info/
-*.py[cod]
-*.tsbuildinfo
+Thumbs.db
+desktop.ini
+
+# --- Python ---
 __pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
 
+# --- Node / frontend ---
+node_modules/
+dist/
+.pnpm-store/
+
+# --- Virtualenv / bundled deps ---
+.venv/
+venv/
+env/
+.deps/
+
+# --- Env / secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Local tooling state (not part of the project) ---
+.claude/
 .workbuddy/
-
-# Deploy artifacts
-scenicmind-deploy.tar
-
-# Local brand images (uploaded to server separately)
-# background.jpg
-# logo.png
-# logo.jpeg
-
-backend/.venv/
-frontend/node_modules/
-frontend/dist/
-frontend/vite.config.js
-frontend/vite.config.d.ts

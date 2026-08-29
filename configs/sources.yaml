@@ -1,0 +1,6 @@
+github_target: "https://raw.githubusercontent.com/hjl-beautiful/scenic-flow-prediction/main/data/jiuzhaigou_daily.csv"
+official_visitors: "https://www.jiuzhai.com/news/number-of-tourists"
+official_notices: "https://www.jiuzhai.com/news/notice"
+open_meteo_archive: "https://archive-api.open-meteo.com/v1/archive"
+wikimedia_pageviews: "https://wikimedia.org/api/rest_v1/metrics/pageviews/per-article"
+holiday_authority: "https://www.gov.cn/"

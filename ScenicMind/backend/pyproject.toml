@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scenicmind-backend"
+version = "0.1.0"
+description = "ScenicMind authentication, upload, forecasting and dashboard API"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "joblib>=1.4,<2",
+  "numpy>=2,<3",
+  "openpyxl>=3.1,<4",
+  "pandas>=2.2,<4",
+  "pyarrow>=18,<26",
+  "pytest>=8,<10",
+  "python-multipart>=0.0.20,<1",
+  "uvicorn[standard]>=0.35,<1",
+  "xlrd>=2,<3",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
