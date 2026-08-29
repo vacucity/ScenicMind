@@ -136,3 +136,36 @@ export async function getModuleTwoSpots(): Promise<string[]> {
   const result = (await response.json()) as { spots: string[] };
   return result.spots;
 }
+
+export type AgentEvidence = {
+  type: "driver" | "voice" | "metric" | "knowledge";
+  label: string;
+  value: string;
+  ref: string;
+};
+
+export type AgentChatResponse = {
+  reply: string;
+  intent: string;
+  spot: string;
+  evidence: AgentEvidence[];
+  suggestions: string[];
+  trace: {
+    agentVersion: string;
+    intentSource: string;
+    generationMode: string;
+    evidenceBound: boolean;
+  };
+};
+
+export async function agentChat(message: string, spot: string, sessionId?: string): Promise<AgentChatResponse> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/agent/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, spot, sessionId }),
+  });
+  if (!response.ok) {
+    throw new Error(`Agent 请求失败：${response.status}`);
+  }
+  return response.json() as Promise<AgentChatResponse>;
+}

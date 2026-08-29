@@ -7,6 +7,7 @@ import {
   type ModuleOneData,
   type ModuleTwoReport,
 } from "../api/modules";
+import { AgentChat } from "../components/AgentChat";
 
 type IconName = "dashboard" | "forecast" | "agent" | "prepare" | "history" | "bell" | "chevron";
 
@@ -18,12 +19,12 @@ type ChartPoint = {
   kind: "history" | "today" | "forecast";
 };
 
-const navItems: Array<{ label: string; icon: IconName }> = [
-  { label: "数据看板", icon: "dashboard" },
-  { label: "客流预测", icon: "forecast" },
-  { label: "Agent 报告", icon: "agent" },
-  { label: "运营准备", icon: "prepare" },
-  { label: "历史记录", icon: "history" },
+const navItems: Array<{ label: string; icon: IconName; target: string }> = [
+  { label: "数据看板", icon: "dashboard", target: "entrance" },
+  { label: "客流预测", icon: "forecast", target: "trend" },
+  { label: "Agent 报告", icon: "agent", target: "agent" },
+  { label: "运营准备", icon: "prepare", target: "prepare" },
+  { label: "历史记录", icon: "history", target: "trend" },
 ];
 
 const numberFormatter = new Intl.NumberFormat("zh-CN");
@@ -227,6 +228,12 @@ export function DashboardPage() {
   const [report, setReport] = useState<ModuleTwoReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [agentOpen, setAgentOpen] = useState(false);
+  const [showDetail, setShowDetail] = useState<"forecast" | "prepare" | null>(null);
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     let active = true;
@@ -319,7 +326,16 @@ export function DashboardPage() {
 
           <nav className="sidebar-nav" aria-label="主导航">
             {navItems.map((item, index) => (
-              <a key={item.label} href={index === 0 ? "/dashboard" : `#${item.icon}`} className={index === 0 ? "active" : ""} aria-current={index === 0 ? "page" : undefined}>
+              <a
+                key={item.label}
+                href={`#${item.target}`}
+                className={index === 0 ? "active" : ""}
+                aria-current={index === 0 ? "page" : undefined}
+                onClick={event => {
+                  event.preventDefault();
+                  scrollTo(item.target);
+                }}
+              >
                 <Icon name={item.icon} />
                 <span>{item.label}</span>
               </a>
@@ -353,7 +369,7 @@ export function DashboardPage() {
 
         <div className="dashboard-grid">
           <div className="primary-column">
-            <section className="metric-card entrance-metric">
+            <section className="metric-card entrance-metric" id="entrance">
               <div className="entrance-stat">
                 <div className="metric-title-row">
                   <span className="metric-kicker">今日预计总人数</span>
@@ -370,7 +386,7 @@ export function DashboardPage() {
               </div>
             </section>
 
-            <section className="card trend-card">
+            <section className="card trend-card" id="trend">
               <div className="card-heading trend-heading">
                 <div>
                   <h2>客流预测趋势</h2>
@@ -403,7 +419,13 @@ export function DashboardPage() {
             <section className="card week-card">
               <div className="card-heading compact-heading">
                 <div className="week-heading-copy"><h2>未来 7 天</h2><span>{selectedSpot}预计入园人数</span></div>
-                <button type="button" className="text-link">查看预测详情 <Icon name="chevron" size={14} /></button>
+                <button
+                  type="button"
+                  className="text-link"
+                  onClick={() => setShowDetail(showDetail === "forecast" ? null : "forecast")}
+                >
+                  {showDetail === "forecast" ? "收起详情" : "查看预测详情"} <Icon name="chevron" size={14} />
+                </button>
               </div>
               <div className="week-list">
                 {week.map(item => (
@@ -414,6 +436,26 @@ export function DashboardPage() {
                   </div>
                 ))}
               </div>
+              {showDetail === "forecast" && (
+                <div className="detail-panel">
+                  <div className="detail-panel-head">未来 7 天预测明细（{selectedSpot}）</div>
+                  <table className="detail-table">
+                    <thead>
+                      <tr><th>日期</th><th>预测人数</th><th>P90</th><th>客流等级</th></tr>
+                    </thead>
+                    <tbody>
+                      {one.forecast.map(item => (
+                        <tr key={item.date}>
+                          <td>{item.date.slice(5)}</td>
+                          <td>{numberFormatter.format(item.predicted)}</td>
+                          <td>{numberFormatter.format(item.p90)}</td>
+                          <td>{item.level}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           </div>
 
@@ -423,7 +465,7 @@ export function DashboardPage() {
               <span className="positive">{one.today.enteredWow}</span>
             </MetricCard>
 
-            <section className="card agent-card">
+            <section className="card agent-card" id="agent">
               <div className="card-heading compact-heading">
                 <div><h2>Agent 数据报告</h2></div>
               </div>
@@ -433,11 +475,11 @@ export function DashboardPage() {
                 <article><span>运营建议</span><p>{topRecommendation ? truncate(`${topRecommendation.title}：${topRecommendation.action}`, 52) : "暂无建议"}</p></article>
               </div>
               <div className="agent-footer">
-                <button className="agent-consult-button" type="button">咨询 Agent <Icon name="chevron" size={13} /></button>
+                <button className="agent-consult-button" type="button" onClick={() => setAgentOpen(true)}>咨询 Agent <Icon name="chevron" size={13} /></button>
               </div>
             </section>
 
-            <section className="card prepare-card">
+            <section className="card prepare-card" id="prepare">
               <div className="card-heading compact-heading">
                 <div><h2>运营准备</h2></div>
                 <span className="risk-label"><i />{riskText}</span>
@@ -456,11 +498,40 @@ export function DashboardPage() {
                   <div><span>暂无运营建议</span><b>-</b><strong>-</strong></div>
                 )}
               </div>
-              <button className="prepare-button" type="button">查看运营准备 <Icon name="chevron" size={14} /></button>
+              <button
+                className="prepare-button"
+                type="button"
+                onClick={() => setShowDetail(showDetail === "prepare" ? null : "prepare")}
+              >
+                {showDetail === "prepare" ? "收起详情" : "查看运营准备"} <Icon name="chevron" size={14} />
+              </button>
+              {showDetail === "prepare" && (
+                <div className="detail-panel">
+                  <div className="detail-panel-head">运营建议明细</div>
+                  <div className="rec-list">
+                    {report.recommendations.map(item => (
+                      <div className="rec-item" key={item.recommendationId}>
+                        <div className="rec-item-head">
+                          <span className={`rec-priority rec-priority-${item.priority}`}>{item.priority}</span>
+                          <strong>{item.title}</strong>
+                        </div>
+                        <p>{item.action}</p>
+                        <div className="rec-item-meta">
+                          <span>依据：{item.rationale}</span>
+                          <span>预期效果：{item.expectedImpact}</span>
+                          {item.evidenceRefs.length > 0 && <span>证据：{item.evidenceRefs.join("、")}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </section>
           </aside>
         </div>
       </section>
+
+      {agentOpen && <AgentChat spot={selectedSpot} onClose={() => setAgentOpen(false)} />}
     </main>
   );
 }

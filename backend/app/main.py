@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .modules.agent import router as agent_router
 from .modules.module_one import router as module_one_router
 from .modules.module_two import router as module_two_router
 
@@ -12,6 +13,7 @@ app = FastAPI(
     description="人流量预测系统的后端接口骨架。",
 )
 
+app.include_router(agent_router)
 app.include_router(module_one_router)
 app.include_router(module_two_router)
 
