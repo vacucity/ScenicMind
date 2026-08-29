@@ -1,5 +1,5 @@
-import { useRef, useState, type DragEvent } from "react";
-import { uploadAnalysis } from "../../../api/analyses";
+import { useEffect, useRef, useState, type DragEvent } from "react";
+import { listAnalyses, uploadAnalysis, type AnalysisHistoryItem } from "../../../api/analyses";
 import { navigate } from "../../../app/navigation";
 import { Brand } from "../../../shared/components/Brand";
 import { getSession, signOut } from "../../auth/services/session";
@@ -21,6 +21,16 @@ export function UploadPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [message, setMessage] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [history, setHistory] = useState<AnalysisHistoryItem[]>([]);
+
+  useEffect(() => {
+    listAnalyses().then(setHistory).catch(() => setHistory([]));
+  }, []);
+
+  function openDashboard(analysisId?: string) {
+    if (analysisId) window.localStorage.setItem("scenicmind.activeAnalysisId", analysisId);
+    navigate("/dashboard");
+  }
 
   function addFiles(incoming: File[]) {
     const rejected = incoming.find(file => !ACCEPTED_EXTENSIONS.includes(extensionOf(file.name)) || file.size > MAX_FILE_SIZE);
@@ -58,7 +68,7 @@ export function UploadPage() {
     <main className="upload-page">
       <header className="upload-header">
         <Brand compact />
-        <div><span>{session?.email ?? session?.username}</span><button type="button" onClick={logout}>退出</button></div>
+        <div><button type="button" className="header-goto-dashboard" onClick={() => openDashboard()}>前往数据看板 →</button><span>{session?.email ?? session?.username}</span><button type="button" onClick={logout}>退出</button></div>
       </header>
       <section className="upload-content">
         <div className="upload-heading"><span>DATA INPUT</span><h1>上传预测数据</h1><p>上传完成后将执行客流预测与独立特征贡献分析，再进入数据看板。</p></div>
@@ -71,6 +81,23 @@ export function UploadPage() {
           {message && <p className="upload-message" role="status">{message}</p>}
           <div className="upload-actions"><button type="button" className="secondary" disabled={!files.length || analyzing} onClick={() => setFiles([])}>清空</button><button type="button" className="primary" disabled={!files.length || analyzing} onClick={startAnalysis}>{analyzing ? "分析中…" : "开始分析 →"}</button></div>
         </div>
+
+        {history.length > 0 && (
+          <div className="upload-history">
+            <div className="upload-history-head"><h2>历史上传记录</h2><p>每次上传的数据均已保存，点击任意记录可进入对应看板</p></div>
+            <ul className="upload-history-list">
+              {history.map(item => (
+                <li key={item.analysisId}>
+                  <button type="button" onClick={() => openDashboard(item.analysisId)}>
+                    <span className="history-name">{item.fileName}</span>
+                    <small>{new Date(item.createdAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</small>
+                    <span className={`history-status ${item.status === "completed" ? "ok" : item.status === "failed" ? "fail" : "pending"}`}>{item.status === "completed" ? "已完成" : item.status === "failed" ? "失败" : "处理中"}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
     </main>
   );

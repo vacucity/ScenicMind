@@ -63,11 +63,86 @@ def initialize_database() -> None:
                 created_at TEXT NOT NULL,
                 completed_at TEXT,
                 result_json TEXT,
-                importance_json TEXT
+                importance_json TEXT,
+                indicators_json TEXT
             );
             CREATE INDEX IF NOT EXISTS analyses_user_created_idx
                 ON analyses(user_id, created_at DESC);
             """
+        )
+        # 增量迁移：已有数据库添加 indicators_json 列
+        try:
+            db.execute("ALTER TABLE analyses ADD COLUMN indicators_json TEXT")
+        except sqlite3.OperationalError:
+            pass  # 列已存在
+        # Agent 报告表
+        db.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS agent_reports (
+                id TEXT PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                analysis_id TEXT NOT NULL,
+                report_type TEXT NOT NULL,
+                status TEXT NOT NULL,
+                question TEXT,
+                period TEXT,
+                markdown TEXT,
+                trace_json TEXT,
+                created_at TEXT NOT NULL,
+                completed_at TEXT
+            );
+            CREATE INDEX IF NOT EXISTS agent_reports_user_idx
+                ON agent_reports(user_id, created_at DESC);
+            """
+        )
+        try:
+            db.execute("ALTER TABLE agent_reports ADD COLUMN period TEXT")
+        except sqlite3.OperationalError:
+            pass  # 列已存在
+
+
+def create_agent_report(report_id: str, user_id: int, analysis_id: str, report_type: str, question: str | None, period: str | None = None) -> None:
+    with connection() as db:
+        db.execute(
+            """INSERT INTO agent_reports(id, user_id, analysis_id, report_type, status, question, period, created_at)
+               VALUES (?, ?, ?, ?, 'running', ?, ?, ?)""",
+            (report_id, user_id, analysis_id, report_type, question, period, utc_now()),
+        )
+
+
+def update_agent_report(report_id: str, **fields: Any) -> None:
+    """按字段更新报告（status/markdown/trace_json/completed_at）。"""
+    if not fields:
+        return
+    columns = ", ".join(f"{key}=?" for key in fields)
+    with connection() as db:
+        db.execute(f"UPDATE agent_reports SET {columns} WHERE id=?", (*fields.values(), report_id))
+
+
+def agent_report_by_id(report_id: str, user_id: int) -> sqlite3.Row | None:
+    with connection() as db:
+        return db.execute(
+            "SELECT * FROM agent_reports WHERE id=? AND user_id=?", (report_id, user_id)
+        ).fetchone()
+
+
+def agent_reports_by_user(user_id: int, limit: int = 50) -> list[sqlite3.Row]:
+    with connection() as db:
+        return db.execute(
+            "SELECT id, analysis_id, report_type, status, question, period, created_at, completed_at FROM agent_reports "
+            "WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()
+
+
+def complete_analysis_with_indicators(
+    analysis_id: str, result: dict[str, Any], importance: dict[str, Any], indicators: dict[str, Any]
+) -> None:
+    with connection() as db:
+        db.execute(
+            """UPDATE analyses SET status='completed', completed_at=?, result_json=?, importance_json=?, indicators_json=?
+               WHERE id=?""",
+            (utc_now(), json_dumps(result), json_dumps(importance), json_dumps(indicators), analysis_id),
         )
 
 
@@ -156,3 +231,12 @@ def latest_analysis(user_id: int) -> sqlite3.Row | None:
         return db.execute(
             "SELECT * FROM analyses WHERE user_id=? ORDER BY created_at DESC LIMIT 1", (user_id,)
         ).fetchone()
+
+
+def analyses_by_user(user_id: int, limit: int = 100) -> list[sqlite3.Row]:
+    with connection() as db:
+        return db.execute(
+            "SELECT id, file_name, status, error, created_at, completed_at FROM analyses "
+            "WHERE user_id=? ORDER BY created_at DESC LIMIT ?",
+            (user_id, limit),
+        ).fetchall()

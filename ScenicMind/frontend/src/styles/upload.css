@@ -28,6 +28,26 @@
 .upload-actions .secondary { border: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.7); background: transparent; }
 .upload-actions .primary { min-width: 142px; border: 0; color: var(--pine-950); background: #d9ebe1; font-weight: 650; }
 
+/* 前往看板按钮 */
+.header-goto-dashboard { font-weight: 600; color: #cfe9dc !important; border-color: rgba(145,195,173,.4) !important; }
+.header-goto-dashboard:hover { background: rgba(61,126,100,.22) !important; }
+
+/* 历史记录 */
+.upload-history { margin-top: 34px; }
+.upload-history-head { margin-bottom: 14px; }
+.upload-history-head h2 { margin: 0; font: 500 20px/1.3 "Noto Serif SC", serif; }
+.upload-history-head p { margin: 6px 0 0; color: rgba(255,255,255,.5); font-size: 11px; }
+.upload-history-list { margin: 0; padding: 0; display: grid; gap: 8px; list-style: none; }
+.upload-history-list li { border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: rgba(255,255,255,.05); overflow: hidden; }
+.upload-history-list button { width: 100%; padding: 12px 16px; display: flex; align-items: center; gap: 14px; border: 0; color: #e6f2ec; background: transparent; cursor: pointer; text-align: left; transition: background-color .16s ease; }
+.upload-history-list button:hover { background: rgba(61,126,100,.16); }
+.history-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 550; }
+.upload-history-list small { color: rgba(255,255,255,.42); font-size: 10px; flex: 0 0 auto; }
+.history-status { flex: 0 0 auto; padding: 3px 10px; border-radius: 999px; font-size: 9px; font-weight: 600; }
+.history-status.ok { color: #b7e6cd; background: rgba(62,158,108,.22); }
+.history-status.fail { color: #f2b8b0; background: rgba(205,92,74,.22); }
+.history-status.pending { color: #f0d9a8; background: rgba(173,121,45,.22); }
+
 @media (max-width: 560px) {
   .upload-header > div > span { display: none; }
   .upload-content { width: min(100% - 28px, 880px); padding-top: 48px; }

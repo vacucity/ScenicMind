@@ -7,12 +7,20 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
-from ..database import analysis_by_id, complete_analysis, create_analysis, fail_analysis, latest_analysis
+from ..database import (
+    analyses_by_user,
+    analysis_by_id,
+    complete_analysis_with_indicators,
+    create_analysis,
+    fail_analysis,
+    latest_analysis,
+)
 from ..dependencies import current_user
 from ..schemas import AnalysisEnvelope
 from ..settings import UPLOAD_DIR
 from ..services.dataset import DatasetError, normalize_dataset, read_uploaded_dataset
 from ..services.forecast import analyze_visitors
+from ..services.indicators import compute_indicators
 
 
 router = APIRouter(prefix="/api/v1/analyses", tags=["analyses"])
@@ -55,7 +63,8 @@ async def create_analysis_from_upload(file: UploadFile = File(...), user=Depends
         raw = read_uploaded_dataset(stored_path)
         normalized, warnings = normalize_dataset(raw)
         result, importance = analyze_visitors(normalized, filename, warnings)
-        complete_analysis(analysis_id, result, importance)
+        indicators = compute_indicators(normalized)
+        complete_analysis_with_indicators(analysis_id, result, importance, indicators)
     except DatasetError as error:
         fail_analysis(analysis_id, str(error))
         raise HTTPException(status_code=422, detail=str(error)) from error
@@ -77,6 +86,22 @@ def get_latest_analysis(user=Depends(current_user)) -> AnalysisEnvelope:
     return _envelope(row)
 
 
+@router.get("")
+def list_analyses(user=Depends(current_user)) -> list[dict]:
+    rows = analyses_by_user(user["id"])
+    return [
+        {
+            "analysisId": row["id"],
+            "fileName": row["file_name"],
+            "status": row["status"],
+            "error": row["error"],
+            "createdAt": row["created_at"],
+            "completedAt": row["completed_at"],
+        }
+        for row in rows
+    ]
+
+
 @router.get("/{analysis_id}", response_model=AnalysisEnvelope, response_model_by_alias=True)
 def get_analysis(analysis_id: str, user=Depends(current_user)) -> AnalysisEnvelope:
     row = analysis_by_id(analysis_id, user["id"])
@@ -93,4 +118,23 @@ def get_analysis_importance(analysis_id: str, user=Depends(current_user)) -> dic
     if row["status"] != "completed" or not row["importance_json"]:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="特征贡献尚未生成")
     return json.loads(row["importance_json"])
+
+
+@router.get("/{analysis_id}/indicators")
+def get_analysis_indicators(analysis_id: str, user=Depends(current_user)) -> dict:
+    row = analysis_by_id(analysis_id, user["id"])
+    if row is None:
+        raise HTTPException(status_code=404, detail="分析任务不存在")
+    if row["status"] != "completed":
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="分析尚未完成")
+    if row["indicators_json"]:
+        return json.loads(row["indicators_json"])
+    # 历史数据无 indicators_json 时按需重新计算
+    try:
+        raw = read_uploaded_dataset(Path(row["stored_path"]))
+        normalized, _ = normalize_dataset(raw)
+        indicators = compute_indicators(normalized)
+        return indicators
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"指标计算失败：{error}") from error
 

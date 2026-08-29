@@ -94,6 +94,14 @@ def normalize_dataset(frame: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         warnings.append(f"发现 {duplicate_count} 条重复日期，已按日期保留最后一条")
         data = data.sort_values("date").drop_duplicates("date", keep="last")
     data = data.sort_values("date").reset_index(drop=True)
+    # 防御性过滤：晚于今天（上传当天）的记录视为未来数据，不参与真实值计算，
+    # 防止未来日期被误当作历史真实客流，确保"截止日期之后不展示真实值"。
+    today = pd.Timestamp.now().normalize()
+    future_mask = data["date"] > today
+    future_count = int(future_mask.sum())
+    if future_count:
+        warnings.append(f"已过滤 {future_count} 条晚于今天（{today.date()}）的记录，这些日期不会作为真实值参与预测")
+        data = data[~future_mask].reset_index(drop=True)
     if len(data) < 21:
         raise DatasetError("至少需要 21 天的连续日客流数据才能进行预测")
     gaps = data["date"].diff().dt.days.dropna()

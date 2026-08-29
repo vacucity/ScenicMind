@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import initialize_database
+from .routers.agent import router as agent_router
 from .routers.analyses import router as analyses_router
 from .routers.auth import router as auth_router
 
@@ -25,6 +26,7 @@ app = FastAPI(
 )
 app.include_router(auth_router)
 app.include_router(analyses_router)
+app.include_router(agent_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[os.getenv("FRONTEND_ORIGIN", "http://127.0.0.1:5173")],
