@@ -15,10 +15,10 @@ datasets/  贵州文旅评论数据（模块二游客声音证据）
 ```powershell
 cd backend
 python -m pip install -e .
-python -m uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload --port 8001
 ```
 
-接口文档位于 http://127.0.0.1:8000/docs。
+接口文档位于 http://127.0.0.1:8001/docs。
 
 前端（另开终端）：
 

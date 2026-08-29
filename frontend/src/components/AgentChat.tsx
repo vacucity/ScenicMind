@@ -12,7 +12,7 @@ export function AgentChat({ spot, onClose }: { spot: string; onClose: () => void
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "agent",
-      content: `你好，我是「${spot}」的经营分析 Agent。\n你可以问我客流预测、波动原因、运营建议，或者做反事实推演。`,
+      content: `你好，我是「${spot}」的经营分析助手。\n可以问我客流预测、影响因素、峰值预警、运营建议等问题。`,
     },
   ]);
   const [input, setInput] = useState("");

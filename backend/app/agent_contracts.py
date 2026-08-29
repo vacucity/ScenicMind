@@ -9,7 +9,7 @@ from .module_two_contracts import CamelModel
 
 class ChatRequest(CamelModel):
     message: str = Field(min_length=1, max_length=500)
-    spot: str = "黄果树瀑布"
+    spot: str | None = None
     session_id: str | None = None
 
 

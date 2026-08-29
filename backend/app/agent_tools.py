@@ -9,16 +9,12 @@ from typing import Any
 
 from .module_one_service import build_forecast
 from .module_two_service import build_report, list_spots
-from .module_two_contracts import ReportRequest
-
-
-def _spot_id(spot: str) -> str:
-    return "huangguoshu" if spot == "黄果树瀑布" else spot
+from .module_two_contracts import ReportRequest, spot_id_for
 
 
 def query_forecast(spot: str) -> dict[str, Any]:
     """客流预测数据（复用模块一）。"""
-    data = build_forecast(spot_id=_spot_id(spot), spot_name=spot)
+    data = build_forecast(spot_id=spot_id_for(spot), spot_name=spot)
     peak = max(data.forecast, key=lambda item: item.predicted)
     return {
         "spot": spot,
@@ -45,7 +41,7 @@ def query_forecast(spot: str) -> dict[str, Any]:
 
 def query_report(spot: str) -> dict[str, Any]:
     """经营报告（复用模块二）。"""
-    report = build_report(ReportRequest(spot_id=_spot_id(spot), spot_name=spot))
+    report = build_report(ReportRequest(spot_id=spot_id_for(spot), spot_name=spot))
     return {
         "kpis": {
             "forecastTotal": report.kpis.forecast_total,
@@ -58,7 +54,7 @@ def query_report(spot: str) -> dict[str, Any]:
         "executiveSummary": report.executive_summary,
         "recommendations": [
             {
-                "id": item.recommendation_id,
+                "recommendationId": item.recommendation_id,
                 "priority": item.priority,
                 "category": item.category,
                 "title": item.title,
@@ -73,26 +69,65 @@ def query_report(spot: str) -> dict[str, Any]:
     }
 
 
-def query_drivers(spot: str) -> dict[str, Any]:
-    """特征贡献 / 归因。"""
-    report = build_report(ReportRequest(spot_id=_spot_id(spot), spot_name=spot))
-    drivers = [
-        {
-            "feature": item.feature,
-            "label": item.label,
-            "contribution": item.contribution_visitors,
-            "direction": item.direction,
-            "explanation": item.explanation,
-        }
-        for item in report.drivers
-    ]
-    drivers.sort(key=lambda d: abs(d["contribution"]), reverse=True)
-    return {"drivers": drivers, "confidence": report.kpis.confidence}
+def query_accuracy(spot: str) -> dict[str, Any]:
+    """预测准确率复盘（演示口径）。
+
+    当前没有真实「历史预测 vs 实际」回测序列，返回演示口径的准确率字段；
+    接入真实预测模型后，此处由回测流水线的 MAPE / 偏差计算替换。
+    """
+    return {
+        "spot": spot,
+        "mapeDaily": 0.183,
+        "mapeThreshold": 0.25,
+        "driftDays": [],
+        "modelStatus": "normal",
+        "passed": True,
+        "demo": True,
+    }
+
+
+def query_attribution(spot: str) -> dict[str, Any]:
+    """特征贡献度（SHAP 归因口径）。
+
+    归因不单独上屏，只作为 Agent 回答「为什么波动」的隐性输入：
+    返回每条驱动因素的 shap（人数贡献）、pct（对峰值占比）与置信度分级。
+    接入真实 SHAP 模块后，shap 数值由 explainer 产出替换（当前由模块二驱动因素换算）。
+    """
+    report = build_report(ReportRequest(spot_id=spot_id_for(spot), spot_name=spot))
+    peak = report.kpis.peak_visitors or 1
+    total_abs = sum(abs(d.contribution_visitors) for d in report.drivers) or 1
+
+    global_items: list[dict[str, Any]] = []
+    for d in sorted(report.drivers, key=lambda x: -abs(x.contribution_visitors)):
+        share = abs(d.contribution_visitors) / peak
+        ratio_of_total = abs(d.contribution_visitors) / total_abs
+        if ratio_of_total >= 0.25:
+            confidence = "high"
+        elif ratio_of_total >= 0.1:
+            confidence = "medium"
+        else:
+            confidence = "low"
+        global_items.append(
+            {
+                "feature": d.feature,
+                "label": d.label,
+                "shap": d.contribution_visitors,
+                "pct": round(share, 4),
+                "direction": d.direction,
+                "confidence": confidence,
+                "explanation": d.explanation,
+            }
+        )
+    return {
+        "reportConfidence": report.kpis.confidence,
+        "global": global_items,
+        "demo": True,
+    }
 
 
 def query_evidence(spot: str) -> dict[str, Any]:
     """游客原声（证据编号 + 影响分 + 原文链接）。"""
-    report = build_report(ReportRequest(spot_id=_spot_id(spot), spot_name=spot))
+    report = build_report(ReportRequest(spot_id=spot_id_for(spot), spot_name=spot))
     insight = report.visitor_insight
     return {
         "sampleScope": insight.sample_scope,
@@ -122,7 +157,7 @@ def whatif(spot: str, scenario: str) -> dict[str, Any]:
     scenario 取值：rain / surge / weekday。基于模块一预测做规则化调整，
     输出调整后的峰值与对比。
     """
-    base = build_forecast(spot_id=_spot_id(spot), spot_name=spot)
+    base = build_forecast(spot_id=spot_id_for(spot), spot_name=spot)
     peak = max(base.forecast, key=lambda item: item.predicted)
 
     factor, label = 1.0, ""

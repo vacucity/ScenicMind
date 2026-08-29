@@ -1,7 +1,12 @@
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# 加载 backend/.env，使 DEEPSEEK_API_KEY、FRONTEND_ORIGIN 等环境变量生效。
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from .modules.agent import router as agent_router
 from .modules.module_one import router as module_one_router
