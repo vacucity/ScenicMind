@@ -102,11 +102,11 @@
 
 ```powershell
 cd backend
-uv sync
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
+python -m pip install -e .
+python -m uvicorn app.main:app --reload --port 8001
 ```
 
-接口文档：http://127.0.0.1:8000/docs
+接口文档：http://127.0.0.1:8001/docs
 
 ### 2. 前端启动（另开终端）
 

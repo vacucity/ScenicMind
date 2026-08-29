@@ -9,6 +9,31 @@ class CamelModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
+# 景点显示名 -> 稳定 ID。评论数据里出现的全部景点都在此，供模块一/模块二/Agent
+# 统一使用，避免同一个景点在不同接口里返回不同的 spotId。
+SPOT_ID_BY_NAME: dict[str, str] = {
+    "九寨沟": "jiuzhaigou",
+    "黄果树瀑布": "huangguoshu",
+    "贵州全域/综合": "guizhou-quanyu",
+    "贵阳市区/黔灵山": "guiyang-qianlingshan",
+    "西江千户苗寨": "xijiang-qianhu-miaozhai",
+    "荔波小七孔": "libo-xiaoqikong",
+    "梵净山": "fanjingshan",
+    "遵义红色胜地/赤水": "zunyi-chishui",
+    "万峰林/马岭河": "wanfenglin-malinghe",
+    "织金洞": "zhijindong",
+    "镇远古城/舞阳河": "zhenyuan-wuyanghe",
+    "肇兴侗寨/加榜梯田": "zhaoxing-dongzhai",
+    "阿西里西韭菜坪/百里杜鹃": "axilixi-bailidujuan",
+    "六盘水凉都/乌蒙大草原": "liupanshui-wumeng",
+}
+
+
+def spot_id_for(name: str) -> str:
+    """返回景点显示名对应的稳定 ID；未收录的名称原样返回。"""
+    return SPOT_ID_BY_NAME.get(name, name)
+
+
 class ForecastPoint(CamelModel):
     date: date
     predicted_visitors: int = Field(ge=0)
@@ -26,8 +51,8 @@ class FeatureDriver(CamelModel):
 
 
 class ReportRequest(CamelModel):
-    spot_id: str = "huangguoshu"
-    spot_name: str = "黄果树瀑布"
+    spot_id: str = "jiuzhaigou"
+    spot_name: str = "九寨沟"
     period_label: str = "未来 7 天"
     capacity: int = Field(default=55_000, gt=0)
     model_version: str = "demo-ensemble-v1"

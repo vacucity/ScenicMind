@@ -144,6 +144,47 @@ export type AgentEvidence = {
   ref: string;
 };
 
+export type AgentAttribution = {
+  feature: string;
+  label: string;
+  shap: number;
+  pct: number;
+  direction: "positive" | "negative";
+  confidence: "high" | "medium" | "low";
+  explanation: string;
+};
+
+export type AgentReport = {
+  spot: string;
+  title: string;
+  accuracy: {
+    mapeDaily: number;
+    mapeThreshold: number;
+    passed: boolean;
+    modelStatus: string;
+    driftDays: string[];
+  };
+  attribution: AgentAttribution[];
+  reportConfidence: number;
+  recommendations: Array<{
+    recommendationId: string;
+    priority: "高" | "中" | "低";
+    category: string;
+    title: string;
+    action: string;
+    rationale: string;
+    expectedImpact: string;
+    evidenceRefs: string[];
+    status: "待评估" | "已采纳";
+  }>;
+  risk: {
+    peakDate: string;
+    peakCapacityRate: number;
+    peakVisitors: number;
+    riskLevel: string;
+  };
+};
+
 export type AgentChatResponse = {
   reply: string;
   intent: string;
@@ -157,6 +198,14 @@ export type AgentChatResponse = {
     evidenceBound: boolean;
   };
 };
+
+export async function getAgentReport(spot: string): Promise<AgentReport> {
+  const response = await fetch(`${apiBaseUrl}/api/v1/agent/report?spot=${encodeURIComponent(spot)}`);
+  if (!response.ok) {
+    throw new Error(`Agent 报告请求失败：${response.status}`);
+  }
+  return response.json() as Promise<AgentReport>;
+}
 
 export async function agentChat(message: string, spot: string, sessionId?: string): Promise<AgentChatResponse> {
   const response = await fetch(`${apiBaseUrl}/api/v1/agent/chat`, {

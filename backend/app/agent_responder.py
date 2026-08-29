@@ -69,11 +69,12 @@ def render_data_query(spot: str, message: str) -> ChatResponse:
 
 
 def render_attribution(spot: str, message: str) -> ChatResponse:
-    drivers = tools.query_drivers(spot)["drivers"]
-    report = tools.query_report(spot)
-    confidence = tools.query_drivers(spot)["confidence"]
+    data = tools.query_attribution(spot)
+    attribution = data["global"]
+    report_confidence = data["reportConfidence"]
+    conf_label = {"high": "高", "medium": "中", "low": "低"}
 
-    if not drivers:
+    if not attribution:
         reply = f"{spot}当前样本不足，无法给出可靠的归因，请降低置信度预期。"
         return ChatResponse(
             reply=reply,
@@ -86,22 +87,26 @@ def render_attribution(spot: str, message: str) -> ChatResponse:
 
     parts = []
     evidence: list[EvidenceRef] = []
-    for driver in drivers[:3]:
-        sign = "+" if driver["contribution"] >= 0 else ""
-        parts.append(f"{driver['label']}（{sign}{_fmt(driver['contribution'])} 人）")
+    for item in attribution[:3]:
+        sign = "+" if item["shap"] >= 0 else ""
+        pct = round(abs(item["pct"]) * 100)
+        parts.append(
+            f"{item['label']} {sign}{pct}%（SHAP {sign}{_fmt(item['shap'])}，置信度{conf_label[item['confidence']]}）"
+        )
         evidence.append(
             EvidenceRef(
                 type="driver",
-                label=driver["label"],
-                value=f"{sign}{_fmt(driver['contribution'])} 人",
-                ref=f"DRIVER-{driver['feature'].upper()}",
+                label=item["label"],
+                value=f"SHAP {sign}{_fmt(item['shap'])}",
+                ref=f"DRIVER-{item['feature'].upper()}",
             )
         )
 
     reply = (
-        f"本期客流主要受以下因素影响：{'、'.join(parts)}。\n"
-        f"最强驱动是「{drivers[0]['label']}」，贡献 {_fmt(drivers[0]['contribution'])} 人。"
-        f"（归因置信度 {confidence}）"
+        f"本期客流主要归因于：\n"
+        + "；\n".join(parts)
+        + f"。\n最强驱动是「{attribution[0]['label']}」，贡献 SHAP {attribution[0]['shap']:+}。"
+        f"（报告整体置信度 {report_confidence}）"
     )
     return ChatResponse(
         reply=reply,
@@ -123,7 +128,7 @@ def render_recommendation(spot: str, message: str) -> ChatResponse:
         evidence.extend(_evidence_refs_for(rec))
 
     reply = (
-        f"针对 {spot} 当前客流态势，给出 {len(recs)} 条建议，优先级从高到低：\n"
+        f"针对 {spot} 当前客流态势，给出 {len(lines)} 条建议，优先级从高到低：\n"
         + "\n".join(lines)
     )
     return ChatResponse(
@@ -218,6 +223,7 @@ def render_evidence(spot: str, message: str) -> ChatResponse:
 def render_greeting(spot: str, message: str) -> ChatResponse:
     reply = (
         f"你好，我是 {spot} 的经营分析 Agent。你可以问我：\n"
+        "· 给我一份周报（复盘+归因+建议+风险）\n"
         "· 今天/未来客流预测\n"
         "· 客流波动的原因\n"
         "· 该采取什么运营措施\n"
@@ -229,7 +235,7 @@ def render_greeting(spot: str, message: str) -> ChatResponse:
         intent="greeting",
         spot=spot,
         evidence=[],
-        suggestions=["今天客流多少？", "给出运营建议", "游客怎么评价的？"],
+        suggestions=["给我一份周报", "今天客流多少？", "游客怎么评价的？"],
         trace=_trace("rule-template"),
     )
 
@@ -249,6 +255,93 @@ def render_fallback(spot: str, message: str) -> ChatResponse:
     )
 
 
+def render_report(spot: str, message: str) -> ChatResponse:
+    """四段式周报：复盘 → 归因 → 建议 → 风险，与提示词文档输出契约对齐。"""
+    accuracy = tools.query_accuracy(spot)
+    attribution = tools.query_attribution(spot)
+    report = tools.query_report(spot)
+    kpis = report["kpis"]
+    conf_label = {"high": "高", "medium": "中", "low": "低"}
+
+    # 一段：预测准确率复盘
+    mape = accuracy["mapeDaily"]
+    threshold = accuracy["mapeThreshold"]
+    status_text = {
+        "normal": "正常",
+        "drift": "数据滞后",
+        "cold_start": "冷启动",
+    }.get(accuracy["modelStatus"], accuracy["modelStatus"])
+    review_lines = [
+        f"- 日级 MAPE {mape * 100:.1f}%（达标线 {threshold * 100:.0f}%），"
+        f"{'✅ 达标' if accuracy['passed'] else '❌ 未达标'}",
+        f"- 模型状态：{status_text}",
+        "- 本周无显著漂移日" if not accuracy["driftDays"] else f"- 漂移日：{'、'.join(accuracy['driftDays'])}",
+    ]
+
+    # 二段：客流归因（每条挂 SHAP + 置信度）
+    attribution_lines = []
+    for item in attribution["global"][:4]:
+        sign = "+" if item["shap"] >= 0 else ""
+        pct = round(abs(item["pct"]) * 100)
+        attribution_lines.append(
+            f"- {item['label']} {sign}{pct}%（SHAP {sign}{_fmt(item['shap'])}，置信度{conf_label[item['confidence']]}）"
+        )
+
+    # 三段：经营建议
+    suggestion_lines = []
+    for rec in report["recommendations"][:3]:
+        suggestion_lines.append(f"{len(suggestion_lines) + 1}. 【{rec['priority']}·{rec['category']}】{rec['action']}")
+
+    # 四段：风险提示
+    risk = kpis["riskLevel"]
+    risk_lines = [
+        f"- 峰值日 {kpis['peakDate'][5:]} 预计达承载量 {round(kpis['peakCapacityRate'] * 100)}%，风险等级「{risk}」",
+        f"- 峰值客流约 {_fmt(kpis['peakVisitors'])} 人，建议峰值日提前布控",
+    ]
+
+    lines = [
+        f"# {spot}经营决策周报",
+        "",
+        "## 一、预测准确率复盘",
+        *review_lines,
+        "",
+        "## 二、客流归因",
+        *attribution_lines,
+        "",
+        "## 三、经营建议",
+        *suggestion_lines,
+        "",
+        "## 四、风险提示",
+        *risk_lines,
+        "",
+        "> 本报告由 AI 生成，供决策参考。",
+    ]
+    reply = "\n".join(lines)
+
+    evidence: list[EvidenceRef] = [
+        EvidenceRef(type="metric", label="日级 MAPE", value=f"{mape * 100:.1f}%", ref="ACC-MAPE"),
+        EvidenceRef(type="metric", label="峰值承载率", value=f"{round(kpis['peakCapacityRate'] * 100)}%", ref="METRIC-CAPACITY"),
+    ]
+    for item in attribution["global"][:3]:
+        evidence.append(
+            EvidenceRef(
+                type="driver",
+                label=item["label"],
+                value=f"SHAP {item['shap']:+}",
+                ref=f"DRIVER-{item['feature'].upper()}",
+            )
+        )
+
+    return ChatResponse(
+        reply=reply,
+        intent="report",
+        spot=spot,
+        evidence=evidence,
+        suggestions=["本周峰值是哪天？", "如果下周下雨呢？", "给出详细排班建议"],
+        trace=_trace("rule-template"),
+    )
+
+
 def _trace(mode: str) -> dict[str, str | bool]:
     return {
         "agentVersion": "scenicmind-agent-v1",
@@ -259,6 +352,7 @@ def _trace(mode: str) -> dict[str, str | bool]:
 
 
 RENDERERS = {
+    "report": render_report,
     "data_query": render_data_query,
     "attribution": render_attribution,
     "recommendation": render_recommendation,

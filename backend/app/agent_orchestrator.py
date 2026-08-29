@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from collections import OrderedDict
 
+from . import agent_llm as llm
 from .agent_contracts import ChatResponse
+from .agent_knowledge import build_context
 from .agent_responder import respond
 from .agent_router import route
 
@@ -30,20 +32,38 @@ def _recall(session_id: str) -> str | None:
     return _SESSIONS.get(session_id)
 
 
-def handle_message(message: str, spot: str, session_id: str | None = None) -> ChatResponse:
+def handle_message(message: str, spot: str | None = None, session_id: str | None = None) -> ChatResponse:
     message = message.strip()[: _MAX_MSG_LEN]
 
-    # 会话内省略指代：未指定景点时，回落到会话记忆的景点
+    # 会话内省略指代：未指定景点时，回落到会话记忆的景点；仍无则用默认景点。
     effective_spot = spot
-    if session_id and (not spot or spot == "黄果树瀑布"):
+    if session_id and not spot:
         remembered = _recall(session_id)
-        if remembered and remembered != "黄果树瀑布":
+        if remembered:
             effective_spot = remembered
-
-    intent = route(message)
-    response = respond(intent, effective_spot, message)
+    if not effective_spot:
+        effective_spot = "九寨沟"
 
     if session_id:
         _remember(session_id, effective_spot)
 
-    return response
+    # 接入 LLM 时，走「有问必答 + 内置知识库」；未配置或调用失败则回退规则 Agent。
+    if llm.is_configured():
+        reply = llm.ask(build_context(effective_spot), message)
+        if reply:
+            return ChatResponse(
+                reply=reply,
+                intent="llm",
+                spot=effective_spot,
+                evidence=[],
+                suggestions=["给我一份周报", "这几天人为什么变多？", "如果下周下雨呢？"],
+                trace={
+                    "agentVersion": "scenicmind-agent-v2",
+                    "intentSource": "llm-deepseek",
+                    "generationMode": "llm",
+                    "evidenceBound": True,
+                },
+            )
+
+    intent = route(message)
+    return respond(intent, effective_spot, message)

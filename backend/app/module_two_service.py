@@ -52,7 +52,9 @@ def list_spots() -> list[str]:
     counts = Counter(row.get("primary_spot", "").strip() for row in rows)
     counts.pop("", None)
     ordered = [name for name, _ in counts.most_common() if name != "贵州全域/综合"]
-    return ordered + (["贵州全域/综合"] if counts.get("贵州全域/综合") else [])
+    ordered = ordered + (["贵州全域/综合"] if counts.get("贵州全域/综合") else [])
+    # 模块一已接入九寨沟 FlowStack 模型，九寨沟排在首位作为默认景区。
+    return ["九寨沟"] + [name for name in ordered if name != "九寨沟"]
 
 
 def _demo_forecast(capacity: int) -> list[ForecastPoint]:

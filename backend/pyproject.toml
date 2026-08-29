@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.116,<1",
   "uvicorn[standard]>=0.35,<1",
+  "python-dotenv>=1.0,<2",
 ]
 
 [tool.setuptools.packages.find]

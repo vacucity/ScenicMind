@@ -15,20 +15,20 @@ def test_application_contracts() -> None:
     assert "/api/v1/module-two/spots" in paths
 
 
-def test_module_one_demo_forecast() -> None:
+def test_module_one_flowstack_forecast() -> None:
     data = module_one_output().data
-    assert data["spotName"] == "黄果树瀑布"
+    assert data["spotName"] == "九寨沟"
+    assert data["demo"] is False
     assert data["today"]["predicted"] > 0
     assert len(data["history"]) == 30
     assert len(data["forecast"]) == 7
     assert len(data["week"]) == 7
-    assert data["demo"] is True
 
 
 def test_module_two_demo_report_is_evidence_bound() -> None:
     output = module_two_output()
     report = output.data
-    assert report["spotName"] == "黄果树瀑布"
+    assert report["spotName"] == "九寨沟"
     assert len(report["forecast"]) == 7
     assert len(report["drivers"]) >= 3
     assert len(report["recommendations"]) >= 3
@@ -75,12 +75,14 @@ def test_module_two_accepts_module_one_payload() -> None:
 
 def test_module_two_spot_catalog() -> None:
     spots = module_two_spots()["spots"]
+    assert spots[0] == "九寨沟"
     assert "黄果树瀑布" in spots
     assert "贵州全域/综合" in spots
 
 
 if __name__ == "__main__":
     test_application_contracts()
+    test_module_one_flowstack_forecast()
     test_module_two_demo_report_is_evidence_bound()
     test_module_two_accepts_module_one_payload()
     test_module_two_spot_catalog()

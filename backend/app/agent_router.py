@@ -15,6 +15,7 @@ ATTRIBUTION_KEYWORDS = ["为什么", "原因", "凭什么", "怎么会", "归因
 RECOMMENDATION_KEYWORDS = ["怎么办", "建议", "应对", "措施", "方案", "怎么", "策略", "人手", "排班", "分流", "限流"]
 EVIDENCE_KEYWORDS = ["游客", "评论", "吐槽", "投诉", "反馈", "声音", "原声", "网友"]
 DATA_KEYWORDS = ["多少", "预测", "客流", "峰值", "今天", "明天", "未来", "几天", "趋势", "承载"]
+REPORT_KEYWORDS = ["周报", "报告", "复盘", "总结", "准确率", "准不准", "误差", "偏差", "概览"]
 
 
 def _has_any(text: str, patterns: list[re.Pattern]) -> bool:
@@ -32,7 +33,7 @@ def _whatif_scenario(text: str) -> str | None:
 
 
 def route(message: str) -> str:
-    """返回意图：data_query / attribution / recommendation / whatif / evidence / greeting / fallback"""
+    """返回意图：report / data_query / attribution / recommendation / whatif / evidence / greeting / fallback"""
     text = message.strip()
     if not text:
         return "fallback"
@@ -46,6 +47,10 @@ def route(message: str) -> str:
             return "whatif"
         # 带"如果"但识别不出场景，仍归为 whatif，走 fallback 场景提示
         return "whatif"
+
+    # 周报/复盘：最像"给我一份完整报告"的意图，优先于单点问答
+    if _has_any(text, [re.compile(k) for k in REPORT_KEYWORDS]):
+        return "report"
 
     if _has_any(text, [re.compile(k) for k in EVIDENCE_KEYWORDS]) and not _has_any(
         text, [re.compile(k) for k in DATA_KEYWORDS]

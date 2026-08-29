@@ -9,6 +9,14 @@ __pycache__/
 
 .workbuddy/
 
+# Deploy artifacts
+scenicmind-deploy.tar
+
+# Local brand images (uploaded to server separately)
+# background.jpg
+# logo.png
+# logo.jpeg
+
 backend/.venv/
 frontend/node_modules/
 frontend/dist/
