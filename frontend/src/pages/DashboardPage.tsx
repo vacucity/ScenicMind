@@ -20,7 +20,6 @@ type ChartPoint = {
 
 const navItems: Array<{ label: string; icon: IconName }> = [
   { label: "数据看板", icon: "dashboard" },
-  { label: "客流预测", icon: "forecast" },
   { label: "Agent 报告", icon: "agent" },
   { label: "运营准备", icon: "prepare" },
   { label: "历史记录", icon: "history" },
@@ -108,9 +107,6 @@ function TrendChart({
   const panX = Math.max(minPan, Math.min(0, basePan + panDelta));
   const actualLinePoints = points.slice(0, todayIndex + 1).map((point, index) => [x(index), y(point.value)] as [number, number]);
   const futureLinePoints = points.slice(todayIndex).map((point, index) => [x(todayIndex + index), y(point.value)] as [number, number]);
-  const upperPoints = futureLinePoints.map((point, index) => [point[0], y(points[todayIndex + index].value * 1.1)] as [number, number]);
-  const lowerPoints = futureLinePoints.map((point, index) => [point[0], y(points[todayIndex + index].value * 0.9)] as [number, number]).reverse();
-  const areaPath = `${upperPoints.map((point, index) => `${index ? "L" : "M"} ${point[0]} ${point[1]}`).join(" ")} ${lowerPoints.map(point => `L ${point[0]} ${point[1]}`).join(" ")} Z`;
   const gridValues = [0.25, 0.5, 0.75, 1];
   const labelEvery = 2;
   const hoveredPoint = hoveredIndex === null ? null : points[hoveredIndex];
@@ -143,7 +139,6 @@ function TrendChart({
         })}
 
         <g className="chart-pan-layer" clipPath="url(#trend-plot-clip)" style={{ transform: `translateX(${panX}px)` }}>
-          <path d={areaPath} className="forecast-band" />
           <path d={smoothPath(actualLinePoints)} className="actual-line" />
           <path d={smoothPath(futureLinePoints)} className="forecast-line" />
 
@@ -184,15 +179,27 @@ function TrendChart({
   );
 }
 
-function MetricCard({ title, value, children, variant }: { title: string; value: string; children: ReactNode; variant?: "forecast" }) {
+function AdmissionProgressCard({ entered, predicted }: { entered: number; predicted: number }) {
+  const admissionPercent = predicted > 0 ? Math.min(100, Math.round((entered / predicted) * 100)) : 0;
+  const segmentCount = 27;
+  const activeSegments = Math.round(segmentCount * admissionPercent / 100);
+
   return (
-    <section className={`metric-card ${variant === "forecast" ? "forecast-metric" : ""}`}>
-      <div className="metric-title-row">
-        <span className="metric-kicker">{title}</span>
-        <span className="metric-rule" />
+    <section className="metric-card admission-progress-card" aria-label={`今日已入园人数占预计总人数百分之${admissionPercent}`}>
+      <div className="admission-progress-copy">
+        <span className="metric-kicker">今日已入园人数</span>
+        <div className="admission-count"><strong>{numberFormatter.format(entered)}</strong><span> / {numberFormatter.format(predicted)} 人</span></div>
+        <small>已入园 / 今日预计</small>
       </div>
-      <div className="metric-value"><strong>{value}</strong><span>人</span></div>
-      <div className="metric-footer">{children}</div>
+      <div className="admission-ring" aria-hidden="true">
+        <svg viewBox="0 0 72 72">
+          {Array.from({ length: segmentCount }, (_, index) => {
+            const angle = -135 + index * (270 / (segmentCount - 1));
+            return <line key={index} className={index < activeSegments ? "admission-segment active" : "admission-segment"} x1="36" y1="5" x2="36" y2="13" transform={`rotate(${angle} 36 36)`} />;
+          })}
+          <text x="36" y="40" textAnchor="middle">{admissionPercent}%</text>
+        </svg>
+      </div>
     </section>
   );
 }
@@ -418,10 +425,7 @@ export function DashboardPage() {
           </div>
 
           <aside className="insight-column" aria-label="运营洞察">
-            <MetricCard title="今日已入园人数" value={numberFormatter.format(one.today.entered)}>
-              <span>{one.today.enteredTime}</span>
-              <span className="positive">{one.today.enteredWow}</span>
-            </MetricCard>
+            <AdmissionProgressCard entered={one.today.entered} predicted={one.today.predicted} />
 
             <section className="card agent-card">
               <div className="card-heading compact-heading">
