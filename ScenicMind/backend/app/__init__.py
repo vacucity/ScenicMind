@@ -1,0 +1,1 @@
+"""ScenicMind backend package."""

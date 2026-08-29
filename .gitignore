@@ -1,0 +1,35 @@
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+
+# --- Node / frontend ---
+node_modules/
+dist/
+.pnpm-store/
+
+# --- Virtualenv / bundled deps ---
+.venv/
+venv/
+env/
+.deps/
+
+# --- Env / secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Local tooling state (not part of the project) ---
+.claude/
+.workbuddy/

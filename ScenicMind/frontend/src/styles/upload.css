@@ -1,0 +1,37 @@
+.upload-page { min-height: 100vh; color: white; background: radial-gradient(circle at 82% 20%, rgba(55,126,99,.35), transparent 36%), linear-gradient(145deg, #081a14, #123c2c 52%, #0d2c20); }
+.upload-header { height: 74px; padding: 0 clamp(24px, 5vw, 70px); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.1); }
+.upload-header > div { display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,.65); font-size: 11px; }
+.upload-header button { padding: 7px 10px; border: 1px solid rgba(255,255,255,.17); border-radius: 6px; color: white; background: transparent; cursor: pointer; }
+.upload-content { width: min(880px, calc(100% - 40px)); margin: 0 auto; padding: clamp(58px, 9vh, 100px) 0 80px; }
+.upload-heading { margin-bottom: 30px; }
+.upload-heading > span { color: #91c3ad; font: 650 9px/1 "Bahnschrift", sans-serif; letter-spacing: .28em; }
+.upload-heading h1 { margin: 12px 0 10px; font: 500 clamp(32px, 5vw, 48px)/1.2 "Noto Serif SC", serif; }
+.upload-heading p { margin: 0; color: rgba(255,255,255,.56); font-size: 12px; line-height: 1.7; }
+.upload-card { padding: clamp(18px, 3vw, 30px); border: 1px solid rgba(255,255,255,.14); border-radius: 16px; background: rgba(255,255,255,.075); box-shadow: 0 24px 70px rgba(0,0,0,.22); backdrop-filter: blur(16px); }
+.upload-dropzone { min-height: 245px; padding: 32px; display: grid; place-items: center; align-content: center; border: 1px dashed rgba(183,220,203,.42); border-radius: 12px; background: rgba(7,27,20,.22); cursor: pointer; outline: none; transition: border-color .18s ease, background-color .18s ease; }
+.upload-dropzone:hover, .upload-dropzone:focus-visible { border-color: #a9d5c1; background: rgba(61,126,100,.14); }
+.upload-icon { width: 52px; height: 52px; margin-bottom: 17px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.2); border-radius: 50%; color: #b8d9ca; font-size: 25px; }
+.upload-dropzone strong { font-size: 17px; font-weight: 600; }
+.upload-dropzone p { margin: 6px 0 15px; color: #9cc8b5; font-size: 12px; }
+.upload-dropzone small { color: rgba(255,255,255,.4); font-size: 9px; }
+.upload-file-list { margin: 18px 0 0; padding: 0; display: grid; gap: 8px; list-style: none; }
+.upload-file-list li { min-height: 56px; padding: 8px 10px; display: grid; grid-template-columns: 42px 1fr 34px; align-items: center; gap: 11px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(0,0,0,.1); }
+.upload-file-list li > span { height: 34px; display: grid; place-items: center; border-radius: 6px; color: #b8d9ca; background: rgba(137,190,165,.12); font-size: 9px; font-weight: 700; }
+.upload-file-list li > div { min-width: 0; display: grid; gap: 4px; }
+.upload-file-list strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 550; }
+.upload-file-list small { color: rgba(255,255,255,.4); font-size: 9px; }
+.upload-file-list button { border: 0; color: rgba(255,255,255,.58); background: transparent; font-size: 20px; cursor: pointer; }
+.upload-message { margin: 15px 0 0; color: #b7dac9; font-size: 10px; }
+.upload-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+.upload-actions button { height: 42px; padding: 0 20px; border-radius: 7px; cursor: pointer; }
+.upload-actions button:disabled { opacity: .42; cursor: not-allowed; }
+.upload-actions .secondary { border: 1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.7); background: transparent; }
+.upload-actions .primary { min-width: 142px; border: 0; color: var(--pine-950); background: #d9ebe1; font-weight: 650; }
+
+@media (max-width: 560px) {
+  .upload-header > div > span { display: none; }
+  .upload-content { width: min(100% - 28px, 880px); padding-top: 48px; }
+  .upload-card { padding: 14px; }
+  .upload-dropzone { min-height: 220px; padding-inline: 18px; text-align: center; }
+}
+

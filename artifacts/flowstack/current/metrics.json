@@ -1,0 +1,51 @@
+{
+  "test_metrics": {
+    "R2": 0.8858069401887564,
+    "MAPE(%)": 13.256305234189778,
+    "WAPE(%)": 10.66474659335358,
+    "RMSE": 3661.1620942334825,
+    "MAE": 2270.123949579832
+  },
+  "stack_only_metrics": {
+    "R2": 0.8830890940305314,
+    "MAPE(%)": 13.59513335040694,
+    "WAPE(%)": 11.202741680170583,
+    "RMSE": 3704.4745475611116,
+    "MAE": 2384.642894840163
+  },
+  "baseline_best": {
+    "R2": 0.8709,
+    "MAPE(%)": 14.25,
+    "WAPE(%)": 11.12,
+    "RMSE": 3892.6,
+    "MAE": 2366.8
+  },
+  "beat_all": true,
+  "meta_weights": {
+    "lgb_huber": 0.0,
+    "xgb_huber": 0.2904552562987234,
+    "lgb_l1": 0.0,
+    "cat_huber": 0.7095447437012765
+  },
+  "lgb_params": {
+    "subsample_freq": 1,
+    "subsample": 0.6,
+    "reg_lambda": 1,
+    "reg_alpha": 0.1,
+    "num_leaves": 15,
+    "n_estimators": 600,
+    "min_child_samples": 20,
+    "learning_rate": 0.01,
+    "colsample_bytree": 0.6
+  },
+  "xgb_params": {
+    "subsample": 1.0,
+    "reg_lambda": 1,
+    "reg_alpha": 0,
+    "n_estimators": 400,
+    "min_child_weight": 5,
+    "max_depth": 6,
+    "learning_rate": 0.01,
+    "colsample_bytree": 0.6
+  }
+}

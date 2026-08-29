@@ -1,0 +1,38 @@
+{
+  "target_column": "visitors",
+  "date_column": "date",
+  "model_parameters": {
+    "loss_function": "RMSE",
+    "eval_metric": "MAE",
+    "iterations": 1000,
+    "learning_rate": 0.03,
+    "depth": 7,
+    "l2_leaf_reg": 6.0,
+    "random_strength": 0.5,
+    "bagging_temperature": 0.5,
+    "random_seed": 42,
+    "allow_writing_files": false,
+    "verbose": false,
+    "thread_count": -1
+  },
+  "backtest": {
+    "folds": 5,
+    "validation_days": 90,
+    "minimum_training_days": 730
+  },
+  "calibration": {
+    "enabled": true,
+    "minimum_samples": 5,
+    "shrinkage": 10.0,
+    "max_absolute_adjustment": 6000.0
+  },
+  "sample_weights": {
+    "normal": 1.0,
+    "weekend": 1.15,
+    "summer_vacation": 1.25,
+    "official_holiday": 1.5,
+    "capacity_restricted": 1.25
+  },
+  "capacity_cap_enabled": false,
+  "explanation_sample_days": 365
+}
