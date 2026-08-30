@@ -14,8 +14,10 @@ import os
 AGENT_API_KEY = os.getenv("AGENT_API_KEY", "")
 
 # ===== LLM Provider 配置（OpenAI 兼容协议） =====
-AGENT_LLM_BASE_URL = os.getenv("AGENT_LLM_BASE_URL", "https://sub.r1muru.com/v1")
-AGENT_LLM_MODEL = os.getenv("AGENT_LLM_MODEL", "gpt-5.4-mini")
+# 服务地址与模型名通过环境变量 AGENT_LLM_BASE_URL / AGENT_LLM_MODEL 注入，
+# 默认留空，避免把第三方中转商地址硬编码进仓库。
+AGENT_LLM_BASE_URL = os.getenv("AGENT_LLM_BASE_URL", "")
+AGENT_LLM_MODEL = os.getenv("AGENT_LLM_MODEL", "")
 AGENT_LLM_TIMEOUT = 90
 AGENT_LLM_MAX_TOKENS = 4000
 

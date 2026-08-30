@@ -39,3 +39,11 @@ backend/runtime/
 # --- Local tooling state (not part of the project) ---
 .claude/
 .workbuddy/
+
+# --- Promo / marketing build artifacts & generated demo state ---
+promo/out/
+promo/scripts/demo-session.json
+*.log
+
+# --- Stray lockfile (frontend uses pnpm, not npm) ---
+frontend/package-lock.json
